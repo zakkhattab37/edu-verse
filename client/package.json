@@ -1,0 +1,9 @@
+{
+  "name": "client-wrapper",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "cd app && npm run dev",
+    "install-app": "cd app && npm install",
+    "build": "cd app && npm run build"
+  }
+}
