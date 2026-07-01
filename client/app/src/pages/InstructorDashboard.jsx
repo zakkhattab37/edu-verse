@@ -109,7 +109,7 @@ const InstructorDashboard = () => {
         </div>
 
         {/* Instructor Profile Card */}
-        <div style={{ margin: '0 16px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div onClick={() => navigate('/instructor-profile')} style={{ margin: '0 16px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
           <img
             src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id}`}
             alt={user?.name}
@@ -178,7 +178,7 @@ const InstructorDashboard = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
-              onClick={() => setActiveMenu('My Courses')}
+              onClick={() => navigate('/course-creation')}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
             >
               <Plus size={16} /> New Course

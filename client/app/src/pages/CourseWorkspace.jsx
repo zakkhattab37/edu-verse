@@ -90,7 +90,10 @@ const CourseWorkspace = () => {
                         <button className="play-btn">
                            <Play size={20} fill="white" /> Play Lecture
                         </button>
-                        <button className="like-btn">
+                        <button className="play-btn" style={{background: '#10B981', marginLeft: '10px'}} onClick={() => navigate('/quiz')}>
+                           <CheckCircle size={20} fill="white" color="#10B981" /> Take Quiz
+                        </button>
+                        <button className="like-btn" style={{marginLeft: '10px'}}>
                            <Heart size={20} color="#4B5563" />
                         </button>
                      </div>
@@ -214,7 +217,7 @@ const CourseWorkspace = () => {
 
                {/* AI Tutor Floating Chat Widget */}
                <div className="ai-tutor-widget">
-                  <div className="tutor-header">
+                  <div className="tutor-header" onClick={() => navigate('/ai-assistant')} style={{cursor: 'pointer'}}>
                      <div className="tutor-title">
                         <MessageSquare size={16} /> AI Tutor
                      </div>

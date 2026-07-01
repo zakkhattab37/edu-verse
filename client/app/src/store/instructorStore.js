@@ -67,6 +67,15 @@ const useInstructorStore = create((set, get) => ({
     }
   },
 
+  fetchStudentActivities: async (studentId) => {
+    try {
+      const res = await axios.get(`${API}/dashboard/instructor/students/${studentId}/activities`, getHeaders());
+      return res.data.activities;
+    } catch (err) {
+      throw err.response?.data?.message || 'Failed to fetch activities';
+    }
+  },
+
   updateStudentCategory: async (studentId, courseId, category, courseRole) => {
     try {
       const res = await axios.put(

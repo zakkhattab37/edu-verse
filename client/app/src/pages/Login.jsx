@@ -25,6 +25,7 @@ const Login = () => {
   const [category, setCategory] = useState('');
   const [academicYear, setAcademicYear] = useState('');
   const [phone, setPhone] = useState('');
+  const [instructorKey, setInstructorKey] = useState('');
 
   const [agreed, setAgreed] = useState(false);
 
@@ -47,9 +48,15 @@ const Login = () => {
         setLocalError('Student ID / Record number is required');
         return;
       }
+      if (role === 'Instructor' && !instructorKey.trim()) {
+        setLocalError('Instructor Registration Key is required');
+        return;
+      }
       try {
         const extras = isStudent
           ? { studentId, category, academicYear, phone }
+          : role === 'Instructor'
+          ? { category, instructorKey }
           : {};
         await register(fullName, email, password, role, extras);
         await login(email, password);
@@ -70,7 +77,7 @@ const Login = () => {
   const switchMode = (toRegister) => {
     setIsRegister(toRegister);
     setLocalError('');
-    setStudentId(''); setCategory(''); setAcademicYear(''); setPhone('');
+    setStudentId(''); setCategory(''); setAcademicYear(''); setPhone(''); setInstructorKey('');
     setFullName(''); setEmail(''); setPassword(''); setConfirmPassword('');
   };
 
@@ -166,22 +173,26 @@ const Login = () => {
                       onChange={e => setPhone(e.target.value)}
                     />
                   </div>
+                </>
+              )}
 
-                  {/* Category + Year row */}
-                  <div className="form-row">
-                    <div style={{ position: 'relative', flex: 1 }}>
-                      <select
-                        className="form-input"
-                        value={category}
-                        onChange={e => setCategory(e.target.value)}
-                        style={{ appearance: 'none', paddingRight: '36px', color: category ? '#111827' : '#9ca3af' }}
-                      >
-                        <option value="">Select a category...</option>
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <ChevronDown size={15} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }} />
-                    </div>
+              {/* ── Category Dropdown (Student & Instructor) ── */}
+              {(isStudent || role === 'Instructor') && (
+                <div className="form-row">
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <select
+                      className="form-input"
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      style={{ appearance: 'none', paddingRight: '36px', color: category ? '#111827' : '#9ca3af' }}
+                    >
+                      <option value="">Select a category...</option>
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown size={15} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }} />
+                  </div>
 
+                  {isStudent && (
                     <div style={{ position: 'relative', flex: 1 }}>
                       <select
                         className="form-input"
@@ -194,9 +205,26 @@ const Login = () => {
                       </select>
                       <ChevronDown size={15} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }} />
                     </div>
-                  </div>
-                </>
+                  )}
+                </div>
               )}
+
+              {/* ── Instructor-only fields ── */}
+              {role === 'Instructor' && (
+                <div style={{ position: 'relative' }}>
+                  <IdCard size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    placeholder="Instructor Registration Key *"
+                    className="form-input"
+                    style={{ paddingLeft: '40px' }}
+                    value={instructorKey}
+                    onChange={e => setInstructorKey(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
             </>
           )}
 

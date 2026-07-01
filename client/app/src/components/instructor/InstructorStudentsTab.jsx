@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, MessageSquare, Tag, X, Check, User } from 'lucide-react';
+import { Search, MessageSquare, Tag, X, Check, User, Activity } from 'lucide-react';
 import useInstructorStore from '../../store/instructorStore';
 
 const CATEGORIES = ['Top Performer', 'At Risk', 'Leader', 'Regular', 'Needs Attention'];
@@ -26,7 +26,25 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  const { sendMessage, updateStudentCategory } = useInstructorStore();
+  const [activitiesModal, setActivitiesModal] = useState(null);
+  const [studentActivities, setStudentActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+
+  const { sendMessage, updateStudentCategory, fetchStudentActivities } = useInstructorStore();
+
+  const handleOpenActivities = async (studentId, name) => {
+    setActivitiesModal({ studentId, name });
+    setStudentActivities([]);
+    setActivitiesLoading(true);
+    try {
+      const acts = await fetchStudentActivities(studentId);
+      setStudentActivities(acts);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
 
   const filtered = (students || []).filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
@@ -164,6 +182,10 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
                           style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#f5f3ff', color: '#6366f1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                           <Tag size={13} /> Assign
                         </button>
+                        <button onClick={() => handleOpenActivities(student.id, student.name)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#ecfdf5', color: '#10b981', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                          <Activity size={13} /> Activity
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -253,6 +275,39 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Activities Modal */}
+      {activitiesModal && (
+        <div style={modalOverlay} onClick={e => { if (e.target === e.currentTarget) setActivitiesModal(null); }}>
+          <div style={{ ...modalBox, width: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexShrink: 0 }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Activity Log — {activitiesModal.name}</h3>
+              <button onClick={() => setActivitiesModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={20} /></button>
+            </div>
+            
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px' }}>
+              {activitiesLoading ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>Loading activities...</div>
+              ) : studentActivities.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>No recent activity found.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {studentActivities.map(act => (
+                    <div key={act.id} style={{ display: 'flex', gap: '12px' }}>
+                      <div style={{ marginTop: '2px', color: '#3b82f6' }}><Activity size={18} /></div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#111827' }}>{act.title}</p>
+                        {act.message && <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#4b5563' }}>{act.message}</p>}
+                        <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#9ca3af' }}>{new Date(act.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

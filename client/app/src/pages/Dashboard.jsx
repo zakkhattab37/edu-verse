@@ -108,7 +108,7 @@ const Dashboard = () => {
                   <Bell size={24} />
                   <div style={{ position: 'absolute', top: 0, right: 0, width: '8px', height: '8px', background: 'var(--danger)', borderRadius: '50%' }}></div>
                </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+               <div onClick={() => navigate('/student-profile')} style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                   <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id}`} alt={user?.name || "Student"} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                   <span style={{ fontWeight: 600, color: '#111827', fontSize: '14px' }}>{user?.name || "Student"}</span>
                </div>

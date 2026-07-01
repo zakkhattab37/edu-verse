@@ -55,24 +55,21 @@ function App() {
         <Route path="/instructor" element={user?.role === 'Instructor' || user?.role === 'Admin' ? <InstructorDashboard /> : <Navigate to="/dashboard" />} />
         <Route path="/admin" element={user?.role === 'Admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
         
-        {/* Sandbox Routes for Batch 2 & 3 */}
-        <Route path="/sandbox/dashboard" element={<Dashboard />} />
-        <Route path="/sandbox/instructor-dashboard" element={<InstructorDashboard />} />
-        <Route path="/sandbox/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/sandbox/course-creation" element={<CourseCreationWizard />} />
-        <Route path="/sandbox/course-workspace" element={<CourseWorkspace />} />
-        <Route path="/sandbox/course-workspace/:id" element={<CourseWorkspace />} />
-        <Route path="/sandbox/subject-portal" element={<SubjectPortalOverview />} />
-        <Route path="/sandbox/course-downloads" element={<CourseDownloadsPage />} />
-        <Route path="/sandbox/student-analytics" element={<StudentAnalyticsDashboard />} />
-        <Route path="/sandbox/student-profile" element={<StudentProfessionalProfile />} />
-        <Route path="/sandbox/instructor-profile" element={<InstructorProfessionalProfile />} />
+        {/* General Application Routes */}
+        <Route path="/course-creation" element={<CourseCreationWizard />} />
+        <Route path="/course-workspace" element={<CourseWorkspace />} />
+        <Route path="/course-workspace/:id" element={<CourseWorkspace />} />
+        <Route path="/subject-portal" element={<SubjectPortalOverview />} />
+        <Route path="/course-downloads" element={<CourseDownloadsPage />} />
+        <Route path="/student-analytics" element={<StudentAnalyticsDashboard />} />
+        <Route path="/student-profile" element={<StudentProfessionalProfile />} />
+        <Route path="/instructor-profile" element={<InstructorProfessionalProfile />} />
         
-        {/* Sandbox Routes for Batch 4 */}
-        <Route path="/sandbox/quiz" element={<QuizInterface />} />
-        <Route path="/sandbox/ai-assistant" element={<AiLearningAssistant />} />
-        <Route path="/sandbox/ai-workspace-1" element={<AiStudyWorkspace1 />} />
-        <Route path="/sandbox/ai-workspace-2" element={<AiStudyWorkspace2 />} />
+        {/* Additional Features */}
+        <Route path="/quiz" element={<QuizInterface />} />
+        <Route path="/ai-assistant" element={<AiLearningAssistant />} />
+        <Route path="/ai-workspace-1" element={<AiStudyWorkspace1 />} />
+        <Route path="/ai-workspace-2" element={<AiStudyWorkspace2 />} />
         
         {/* Catch-all 404 Route */}
         <Route path="*" element={<NotFoundPage />} />

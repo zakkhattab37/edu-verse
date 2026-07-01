@@ -49,7 +49,7 @@ const DashboardOverview = () => {
                  enrollments?.map(enrollment => (
                    <div 
                      key={enrollment.id}
-                     onClick={() => navigate(`/sandbox/course-workspace/${enrollment.course_id}`)} 
+                     onClick={() => navigate(`/course-workspace/${enrollment.course_id}`)} 
                      style={{ flex: 1, minWidth: '200px', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '16px', cursor: 'pointer', transition: 'border-color 0.2s' }}
                    >
                       <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(246, 36, 64, 0.1)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>

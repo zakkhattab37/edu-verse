@@ -242,6 +242,36 @@ router.get('/instructor/students', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/dashboard/instructor/students/:studentId/activities
+// @desc    Get recent activities of a specific student
+// @access  Private (Instructor/Admin)
+router.get('/instructor/students/:studentId/activities', auth, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const instructor_id = req.user.id;
+
+    // Verify instructor shares a course with the student
+    const courses = await Course.findAll({ where: { instructor_id }, attributes: ['id'] });
+    const courseIds = courses.map(c => c.id);
+    const enrollment = await Enrollment.findOne({ where: { student_id: studentId, course_id: courseIds } });
+    
+    if (!enrollment && req.user.role !== 'Admin') {
+      return res.status(403).json({ message: 'Unauthorized to view this student\'s activities' });
+    }
+
+    const activities = await Activity.findAll({
+      where: { user_id: studentId },
+      order: [['createdAt', 'DESC']],
+      limit: 20
+    });
+
+    res.json({ activities });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // @route   PUT /api/dashboard/instructor/students/:studentId/category
 // @desc    Assign a category and/or role to a student within a course
 // @access  Private (Instructor/Admin)

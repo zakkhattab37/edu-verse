@@ -72,7 +72,7 @@ const CoursesTab = () => {
                   </div>
                   
                   <button 
-                    onClick={() => navigate(`/sandbox/course-workspace/${enrollment.course_id}`)}
+                    onClick={() => navigate(`/course-workspace/${enrollment.course_id}`)}
                     style={{ width: '100%', padding: '12px', background: 'var(--bg-secondary)', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#111827', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
                     onMouseOver={e => e.currentTarget.style.background = '#F3F4F6'}
                     onMouseOut={e => e.currentTarget.style.background = 'var(--bg-secondary)'}

@@ -78,7 +78,7 @@ const StudentHome = () => {
           </button>
           {/* Avatar & name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer' }}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/student-profile')}
           >
             <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id}`} alt={user?.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</span>

@@ -6,7 +6,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'eduverse_super_secret_key';
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, studentId, category, academicYear, phone } = req.body;
+    const { name, email, password, role, studentId, category, academicYear, phone, instructorKey } = req.body;
+
+    if (role === 'Instructor') {
+      const validKey = process.env.INSTRUCTOR_KEY || 'eduverse_instructor_secret';
+      if (instructorKey !== validKey) {
+        return res.status(403).json({ message: 'Invalid Instructor Registration Key' });
+      }
+    }
 
     // Check if user exists
     const existingUser = await User.findOne({ where: { email } });

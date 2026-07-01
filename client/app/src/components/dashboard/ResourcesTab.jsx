@@ -9,8 +9,8 @@ const ResourcesTab = () => {
     {
       category: 'AI Study Tools',
       items: [
-        { title: 'NotebookLM Workspace', description: 'Interact with your course materials using AI.', icon: <BrainCircuit size={24} />, path: '/sandbox/ai-workspace-2', color: '#0B57D0', bg: '#D3E3FD' },
-        { title: 'AI Flashcards', description: 'Auto-generate flashcards from your notes.', icon: <Compass size={24} />, path: '/sandbox/ai-workspace-1', color: '#8B5CF6', bg: '#EDE9FE' }
+        { title: 'NotebookLM Workspace', description: 'Interact with your course materials using AI.', icon: <BrainCircuit size={24} />, path: '/ai-workspace-2', color: '#0B57D0', bg: '#D3E3FD' },
+        { title: 'AI Flashcards', description: 'Auto-generate flashcards from your notes.', icon: <Compass size={24} />, path: '/ai-workspace-1', color: '#8B5CF6', bg: '#EDE9FE' }
       ]
     },
     {

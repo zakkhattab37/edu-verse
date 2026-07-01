@@ -41,7 +41,7 @@ const Landing = () => {
             </p>
             <div className="hero-actions">
               <Link to="/register" className="btn-white">Get Started</Link>
-              <Link to="/sandbox/subject-portal" className="btn-outline-white">Explore Courses</Link>
+              <Link to="/subject-portal" className="btn-outline-white">Explore Courses</Link>
             </div>
           </div>
 
