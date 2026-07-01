@@ -1,8 +1,10 @@
 import { BookOpen, BrainCircuit, MoreHorizontal, Send, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import useAuthStore from '../store/authStore';
 
 const AiLearningAssistant = () => {
   const [input, setInput] = useState('');
+  const { user } = useAuthStore();
   
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F9FAFB', fontFamily: 'Inter, sans-serif' }}>
@@ -22,8 +24,8 @@ const AiLearningAssistant = () => {
             </nav>
          </div>
          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-            <img src="https://i.pravatar.cc/150?u=4" alt="Alex Chen" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-            <span style={{ fontSize: '14px', fontWeight: 500 }}>Alex Chen</span>
+            <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || 4}`} alt={user?.name || "Student"} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>{user?.name || "Student"}</span>
          </div>
       </header>
 
@@ -50,7 +52,7 @@ const AiLearningAssistant = () => {
                   <div style={{ background: '#F3F4F6', color: '#111827', padding: '16px 24px', borderRadius: '20px', borderTopRightRadius: '4px', fontSize: '15px' }}>
                      Hello!
                   </div>
-                  <img src="https://i.pravatar.cc/150?u=4" alt="User" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
+                  <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || 4}`} alt={user?.name || "User"} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                </div>
 
                {/* AI Message */}

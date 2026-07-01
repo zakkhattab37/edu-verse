@@ -20,6 +20,10 @@ const Course = sequelize.define('Course', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  targetYear: {
+    type: DataTypes.ENUM('First', 'Second', 'Third', 'Fourth', 'All'),
+    defaultValue: 'All'
+  },
   status: {
     type: DataTypes.ENUM('Draft', 'Published', 'Archived'),
     defaultValue: 'Draft'

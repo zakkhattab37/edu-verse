@@ -1,4 +1,4 @@
-import { BookOpen, Calendar as CalendarIcon, FileText, MoreHorizontal, ChevronLeft, ChevronRight, PlayCircle, Edit3 } from 'lucide-react';
+import { BookOpen, Calendar as CalendarIcon, FileText, MoreHorizontal, ChevronLeft, ChevronRight, PlayCircle, Edit3, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import useDashboardStore from '../../store/dashboardStore';
@@ -13,8 +13,16 @@ const DashboardOverview = () => {
     switch(type) {
       case 'video': return <PlayCircle size={16} />;
       case 'grade': return <FileText size={16} />;
+      case 'message': return <MessageSquare size={16} />;
       default: return <Edit3 size={16} />;
     }
+  };
+
+  const getActivityColor = (type) => {
+    if (type === 'message') return { bg: '#eff6ff', color: '#3b82f6' };
+    if (type === 'grade') return { bg: '#f0fdf4', color: '#16a34a' };
+    if (type === 'video') return { bg: '#fdf4ff', color: '#9333ea' };
+    return { bg: 'var(--bg-secondary)', color: 'var(--accent-primary)' };
   };
 
   return (
@@ -187,19 +195,27 @@ const DashboardOverview = () => {
                {activities.length === 0 ? (
                  <p style={{ color: '#6B7280', zIndex: 1, background: '#fff', padding: '4px' }}>No recent activity.</p>
                ) : (
-                 activities.map((item, idx) => (
-                    <div key={item.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
-                       <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-secondary)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #FFFFFF' }}>
-                          {getActivityIcon(item.type)}
-                       </div>
-                       <div style={{ paddingTop: '4px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: 500, color: '#111827', marginBottom: '2px' }}>{item.title}</div>
-                          <div style={{ fontSize: '12px', color: '#6B7280' }}>
-                            {new Date(item.createdAt).toLocaleString()}
+                  activities.map((item) => {
+                     const ac = getActivityColor(item.type);
+                     return (
+                       <div key={item.id} style={{ display: 'flex', gap: '16px', position: 'relative', zIndex: 1 }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: ac.bg, color: ac.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '2px solid #FFFFFF' }}>
+                             {getActivityIcon(item.type)}
+                          </div>
+                          <div style={{ paddingTop: '4px', flex: 1 }}>
+                             <div style={{ fontSize: '14px', fontWeight: 600, color: '#111827', marginBottom: '2px' }}>{item.title}</div>
+                             {item.type === 'message' && item.message && (
+                               <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginTop: '6px', fontSize: '13px', color: '#1d4ed8', lineHeight: 1.5 }}>
+                                 💬 {item.message}
+                               </div>
+                             )}
+                             <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>
+                               {new Date(item.createdAt).toLocaleString()}
+                             </div>
                           </div>
                        </div>
-                    </div>
-                 ))
+                     );
+                  })
                )}
             </div>
          </div>

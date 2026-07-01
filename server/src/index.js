@@ -34,6 +34,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/courses', require('./routes/courseRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/assignments', require('./routes/assignmentRoutes'));
+app.use('/api/submissions', require('./routes/submissionRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'EDUVERSE API is running' });
@@ -41,11 +44,16 @@ app.get('/api/health', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ alter: true }).then(() => {
-  console.log('Database synced');
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}).catch(err => {
-  console.error('Failed to sync database:', err);
-});
+const startServer = async () => {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('Database synced');
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to sync database:', err);
+  }
+};
+
+startServer();

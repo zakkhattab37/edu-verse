@@ -12,6 +12,16 @@ const Enrollment = sequelize.define('Enrollment', {
   progress: {
     type: DataTypes.INTEGER,
     defaultValue: 0
+  },
+  category: {
+    type: DataTypes.STRING, // e.g. 'Top Performer', 'At Risk', 'Leader', 'Regular'
+    allowNull: true,
+    defaultValue: null
+  },
+  courseRole: {
+    type: DataTypes.STRING, // e.g. 'Study Group Leader', 'Mentor', 'Regular'
+    allowNull: true,
+    defaultValue: null
   }
 });
 

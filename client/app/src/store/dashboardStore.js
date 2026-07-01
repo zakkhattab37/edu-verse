@@ -3,6 +3,21 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/dashboard';
 
+// Helper: sync any user field changes into authStore + localStorage
+const syncUserToAuth = (updates) => {
+  try {
+    const stored = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!stored) return;
+    const merged = { ...stored, ...updates };
+    localStorage.setItem('user', JSON.stringify(merged));
+    // Directly mutate the authStore state without importing the module
+    // (avoids circular dependency) — we trigger through a custom DOM event
+    window.dispatchEvent(new CustomEvent('auth:user-updated', { detail: merged }));
+  } catch (e) {
+    console.warn('syncUserToAuth failed:', e);
+  }
+};
+
 const useDashboardStore = create((set, get) => ({
   userSettings: null,
   enrollments: [],
@@ -19,9 +34,7 @@ const useDashboardStore = create((set, get) => ({
       if (!token) throw new Error('No token found');
 
       const response = await axios.get(`${API_URL}/student`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       set({
@@ -44,22 +57,23 @@ const useDashboardStore = create((set, get) => ({
       if (!token) throw new Error('No token found');
 
       const response = await axios.put(`${API_URL}/settings`, settingsData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Update local state with the new settings
+      const updates = {
+        name: response.data.name,
+        bio: response.data.bio,
+        avatar: response.data.avatar,
+        preferences: response.data.preferences
+      };
+
+      // Update dashboardStore state
       const currentUserSettings = get().userSettings || {};
-      set({
-        userSettings: {
-          ...currentUserSettings,
-          name: response.data.name,
-          bio: response.data.bio,
-          avatar: response.data.avatar,
-          preferences: response.data.preferences
-        }
-      });
+      set({ userSettings: { ...currentUserSettings, ...updates } });
+
+      // ✅ Sync to authStore + localStorage so all navbars/headers update
+      syncUserToAuth(updates);
+
       return true;
     } catch (err) {
       console.error('Error updating settings:', err);
@@ -82,15 +96,16 @@ const useDashboardStore = create((set, get) => ({
         }
       });
 
-      // Update local state with the new avatar URL
+      const avatarUrl = response.data.avatarUrl;
+
+      // Update dashboardStore state
       const currentUserSettings = get().userSettings || {};
-      set({
-        userSettings: {
-          ...currentUserSettings,
-          avatar: response.data.avatarUrl
-        }
-      });
-      return response.data.avatarUrl;
+      set({ userSettings: { ...currentUserSettings, avatar: avatarUrl } });
+
+      // ✅ Sync avatar to authStore + localStorage immediately
+      syncUserToAuth({ avatar: avatarUrl });
+
+      return avatarUrl;
     } catch (err) {
       console.error('Error uploading avatar:', err);
       return null;

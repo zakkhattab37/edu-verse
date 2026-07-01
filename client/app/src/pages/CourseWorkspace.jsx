@@ -2,6 +2,7 @@ import { Home, BookOpen, FileText, Users, MessageSquare, LogOut, Play, Heart, Do
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useCourseStore from '../store/courseStore';
+import useAuthStore from '../store/authStore';
 import './CourseWorkspace.css';
 
 const CourseWorkspace = () => {
@@ -10,6 +11,7 @@ const CourseWorkspace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentCourse, fetchCourseById, isLoading } = useCourseStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     if (id) {
@@ -46,7 +48,7 @@ const CourseWorkspace = () => {
                </div>
             </div>
             <div className="navbar-right">
-               <img src="https://i.pravatar.cc/150?u=5" alt="Profile" className="profile-pic" />
+               <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || 5}`} alt={user?.name || "Profile"} className="profile-pic" style={{ objectFit: 'cover' }} />
             </div>
          </header>
 

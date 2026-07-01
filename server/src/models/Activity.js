@@ -16,8 +16,16 @@ const Activity = sequelize.define('Activity', {
     allowNull: false
   },
   type: {
-    type: DataTypes.STRING, // 'video', 'assignment', 'grade', etc.
+    type: DataTypes.STRING, // 'video', 'assignment', 'grade', 'message', etc.
     allowNull: false
+  },
+  message: {
+    type: DataTypes.TEXT, // Optional message body (e.g. instructor notes)
+    allowNull: true
+  },
+  from_user_id: {
+    type: DataTypes.UUID, // Track who sent it (for instructor->student messages)
+    allowNull: true
   }
 });
 

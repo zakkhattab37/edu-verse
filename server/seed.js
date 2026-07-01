@@ -33,6 +33,14 @@ const seedData = async () => {
       role: 'Instructor'
     });
 
+    // Create User (Admin)
+    await User.create({
+      name: 'System Admin',
+      email: 'admin@example.com',
+      password: hashedPassword,
+      role: 'Admin'
+    });
+
     // Create Courses
     const course1 = await Course.create({
       title: 'Advanced Machine Learning',

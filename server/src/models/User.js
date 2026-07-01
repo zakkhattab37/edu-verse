@@ -46,6 +46,22 @@ const User = sequelize.define('User', {
   preferences: {
     type: DataTypes.JSON, // e.g. { email: true, sms: false, publicProfile: true }
     allowNull: true
+  },
+  studentId: {
+    type: DataTypes.STRING, // University student ID / record number
+    allowNull: true
+  },
+  category: {
+    type: DataTypes.STRING, // e.g. 'Computer Science', 'Data Science', ...
+    allowNull: true
+  },
+  academicYear: {
+    type: DataTypes.ENUM('First', 'Second', 'Third', 'Fourth'),
+    allowNull: true
+  },
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 

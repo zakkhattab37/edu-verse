@@ -1,6 +1,8 @@
 import { Menu, Bell, Search, FileText, Link as LinkIcon, MessageSquare, MoreHorizontal, Send, Grid, Plus, Bold, Italic, Underline, Link2, List, ListOrdered, Image as ImageIcon, Undo, Redo, Sparkles } from 'lucide-react';
+import useAuthStore from '../store/authStore';
 
 const AiStudyWorkspace2 = () => {
+  const { user } = useAuthStore();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F0F4F9', fontFamily: 'Inter, sans-serif' }}>
       
@@ -14,7 +16,7 @@ const AiStudyWorkspace2 = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
            <Bell size={24} color="#444746" cursor="pointer" />
-           <img src="https://i.pravatar.cc/150?u=9" alt="User" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+           <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id || 9}`} alt={user?.name || "User"} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
         </div>
       </header>
 

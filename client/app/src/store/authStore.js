@@ -21,10 +21,17 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  register: async (name, email, password, role) => {
+  // Extended register: accepts full student profile fields
+  register: async (name, email, password, role, extras = {}) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
+      await axios.post('http://localhost:5000/api/auth/register', {
+        name,
+        email,
+        password,
+        role,
+        ...extras  // studentId, category, academicYear, phone
+      });
       set({ isLoading: false });
     } catch (err) {
       set({ error: err.response?.data?.message || 'Registration failed', isLoading: false });
@@ -38,5 +45,12 @@ const useAuthStore = create((set) => ({
     set({ user: null, token: null });
   }
 }));
+
+// Listen for external updates to the user object (e.g. from dashboardStore avatar changes)
+if (typeof window !== 'undefined') {
+  window.addEventListener('auth:user-updated', (e) => {
+    useAuthStore.setState({ user: e.detail });
+  });
+}
 
 export default useAuthStore;

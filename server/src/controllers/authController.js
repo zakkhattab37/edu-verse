@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'eduverse_super_secret_key';
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, studentId, category, academicYear, phone } = req.body;
 
     // Check if user exists
     const existingUser = await User.findOne({ where: { email } });
@@ -17,12 +17,16 @@ exports.register = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with extended student profile fields
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: role || 'Student'
+      role: role || 'Student',
+      studentId: studentId || null,
+      category: category || null,
+      academicYear: academicYear || null,
+      phone: phone || null
     });
 
     res.status(201).json({ message: 'User registered successfully', userId: user.id });
@@ -62,7 +66,12 @@ exports.login = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        avatar: user.avatar,
+        studentId: user.studentId,
+        category: user.category,
+        academicYear: user.academicYear,
+        phone: user.phone
       }
     });
   } catch (error) {

@@ -17,6 +17,7 @@ import AiLearningAssistant from './pages/AiLearningAssistant';
 import AiStudyWorkspace1 from './pages/AiStudyWorkspace1';
 import AiStudyWorkspace2 from './pages/AiStudyWorkspace2';
 import StudentWelcome from './pages/StudentWelcome';
+import StudentHome from './pages/StudentHome';
 import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
@@ -33,7 +34,14 @@ function App() {
             !user ? <Navigate to="/login" /> : 
             user.role === 'Admin' ? <Navigate to="/admin" /> :
             user.role === 'Instructor' ? <Navigate to="/instructor" /> :
-            <StudentWelcome />
+            <Navigate to="/home" />
+        } />
+
+        {/* Student Home Page */}
+        <Route path="/home" element={
+            !user ? <Navigate to="/login" /> :
+            user.role !== 'Student' ? <Navigate to="/dashboard" /> :
+            <StudentHome />
         } />
 
         {/* Dynamic Dashboard Routing based on Role */}
