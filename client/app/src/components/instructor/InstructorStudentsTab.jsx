@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, MessageSquare, Tag, X, Check, User, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, MessageSquare, Tag, X, Check, User, Activity, Plus } from 'lucide-react';
 import useInstructorStore from '../../store/instructorStore';
 
 const CATEGORIES = ['Top Performer', 'At Risk', 'Leader', 'Regular', 'Needs Attention'];
@@ -16,21 +16,43 @@ const CATEGORY_COLORS = {
 };
 
 const InstructorStudentsTab = ({ students, studentsLoading }) => {
+  const [activeTab, setActiveTab] = useState('enrolled'); // 'enrolled' or 'department'
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
-  const [messageModal, setMessageModal] = useState(null); // { studentId, name }
-  const [categoryModal, setCategoryModal] = useState(null); // { studentId, name, enrollments }
+  
+  const [messageModal, setMessageModal] = useState(null);
+  const [categoryModal, setCategoryModal] = useState(null);
+  const [activitiesModal, setActivitiesModal] = useState(null);
+  const [enrollModal, setEnrollModal] = useState(null); // { studentId, name }
+
   const [msgForm, setMsgForm] = useState({ title: '', message: '' });
   const [catForm, setCatForm] = useState({ courseId: '', category: '', courseRole: '' });
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
 
-  const [activitiesModal, setActivitiesModal] = useState(null);
   const [studentActivities, setStudentActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
 
-  const { sendMessage, updateStudentCategory, fetchStudentActivities } = useInstructorStore();
+  const { 
+    sendMessage, 
+    updateStudentCategory, 
+    fetchStudentActivities,
+    dashboardData,
+    departmentStudents,
+    deptStudentsLoading,
+    fetchDepartmentStudents,
+    enrollStudent,
+    fetchInstructorStudents
+  } = useInstructorStore();
+
+  useEffect(() => {
+    if (activeTab === 'department') {
+      fetchDepartmentStudents();
+    }
+  }, [activeTab, fetchDepartmentStudents]);
 
   const handleOpenActivities = async (studentId, name) => {
     setActivitiesModal({ studentId, name });
@@ -45,13 +67,6 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
       setActivitiesLoading(false);
     }
   };
-
-  const filtered = (students || []).filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
-    const matchCat = !categoryFilter || s.category === categoryFilter;
-    const matchYear = !yearFilter || s.academicYear === yearFilter;
-    return matchSearch && matchCat && matchYear;
-  });
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -83,6 +98,35 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
     }
   };
 
+  const handleEnroll = async (e) => {
+    e.preventDefault();
+    if (!selectedCourseId) return;
+    setActionLoading(true);
+    try {
+      await enrollStudent(enrollModal.studentId, selectedCourseId);
+      setFeedback('Student successfully enrolled!');
+      // Refresh both lists
+      fetchDepartmentStudents();
+      fetchInstructorStudents();
+      setTimeout(() => { setEnrollModal(null); setFeedback(''); setSelectedCourseId(''); }, 1500);
+    } catch (err) {
+      setFeedback(typeof err === 'string' ? err : 'Failed to enroll');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const currentList = activeTab === 'enrolled' ? students : departmentStudents;
+  const isLoading = activeTab === 'enrolled' ? studentsLoading : deptStudentsLoading;
+
+  const filtered = (currentList || []).filter(s => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
+    const matchCat = !categoryFilter || (activeTab === 'department' ? false : s.category === categoryFilter); // For department view, category means something else, let's just keep the filter logic simple or disable it.
+    const matchYear = !yearFilter || s.academicYear === yearFilter;
+    if (activeTab === 'department') return matchSearch && matchYear;
+    return matchSearch && matchCat && matchYear;
+  });
+
   const modalOverlay = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' };
   const modalBox = { background: '#fff', borderRadius: '16px', padding: '32px', width: '460px', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' };
 
@@ -92,13 +136,25 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111827' }}>Students</h2>
-          <p style={{ margin: '4px 0 0', color: '#6b7280', fontSize: '14px' }}>{filtered.length} student{filtered.length !== 1 ? 's' : ''} enrolled across your courses</p>
+          <p style={{ margin: '4px 0 16px', color: '#6b7280', fontSize: '14px' }}>
+            {activeTab === 'enrolled' ? `${filtered.length} student(s) enrolled across your courses` : `${filtered.length} student(s) in your department`}
+          </p>
+          <div style={{ display: 'flex', gap: '8px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', display: 'inline-flex' }}>
+            <button onClick={() => setActiveTab('enrolled')} style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', background: activeTab === 'enrolled' ? '#fff' : 'transparent', color: activeTab === 'enrolled' ? '#111827' : '#64748b', boxShadow: activeTab === 'enrolled' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+              My Enrolled Students
+            </button>
+            <button onClick={() => setActiveTab('department')} style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', background: activeTab === 'department' ? '#fff' : 'transparent', color: activeTab === 'department' ? '#111827' : '#64748b', boxShadow: activeTab === 'department' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+              Department Students
+            </button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '10px', fontSize: '14px', background: '#fff' }}>
-            <option value="">All Categories</option>
-            {STUDENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', paddingTop: '10px' }}>
+          {activeTab === 'enrolled' && (
+            <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '10px', fontSize: '14px', background: '#fff' }}>
+              <option value="">All Categories</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
           <select value={yearFilter} onChange={e => setYearFilter(e.target.value)} style={{ padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '10px', fontSize: '14px', background: '#fff' }}>
             <option value="">All Years</option>
             {ACADEMIC_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -110,12 +166,12 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
         </div>
       </div>
 
-      {studentsLoading ? (
+      {isLoading ? (
         <div style={{ textAlign: 'center', padding: '60px', color: '#6b7280' }}>Loading students...</div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', background: '#fff', borderRadius: '14px', border: '1px solid #e5e7eb', color: '#6b7280' }}>
           <User size={48} style={{ color: '#d1d5db', marginBottom: '12px' }} />
-          <p>{search ? 'No students match your search.' : 'No students enrolled in your courses yet.'}</p>
+          <p>{search ? 'No students match your search.' : (activeTab === 'enrolled' ? 'No students enrolled in your courses yet.' : 'No students found in your department.')}</p>
         </div>
       ) : (
         <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e5e7eb', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
@@ -123,17 +179,20 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
             <thead>
               <tr style={{ background: '#f9fafb', color: '#6b7280', fontWeight: 600 }}>
                 <th style={{ padding: '14px 20px', textAlign: 'left' }}>Student Profile</th>
-                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Courses</th>
-                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Avg. Score</th>
-                <th style={{ padding: '14px 20px', textAlign: 'left' }}>Performance Category</th>
+                <th style={{ padding: '14px 20px', textAlign: 'left' }}>{activeTab === 'enrolled' ? 'Courses' : 'Current Enrollments'}</th>
+                {activeTab === 'enrolled' && <th style={{ padding: '14px 20px', textAlign: 'left' }}>Avg. Score</th>}
+                {activeTab === 'enrolled' && <th style={{ padding: '14px 20px', textAlign: 'left' }}>Performance Category</th>}
                 <th style={{ padding: '14px 20px', textAlign: 'left' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((student, i) => {
-                const avgAll = student.enrollments.filter(e => e.avgScore !== null);
+                const enrollments = student.enrollments || student.Enrollments || [];
+                
+                // Fields for enrolled tab
+                const avgAll = activeTab === 'enrolled' ? enrollments.filter(e => e.avgScore !== null) : [];
                 const overallAvg = avgAll.length > 0 ? Math.round(avgAll.reduce((s, e) => s + e.avgScore, 0) / avgAll.length) : null;
-                const allCategories = student.enrollments.map(e => e.category).filter(Boolean);
+                const allCategories = activeTab === 'enrolled' ? enrollments.map(e => e.category).filter(Boolean) : [];
                 const primaryCat = allCategories[0] || null;
                 const catStyle = primaryCat ? CATEGORY_COLORS[primaryCat] || CATEGORY_COLORS['Regular'] : null;
 
@@ -154,45 +213,92 @@ const InstructorStudentsTab = ({ students, studentsLoading }) => {
                     </td>
                     <td style={{ padding: '16px 20px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        {student.enrollments.slice(0, 2).map((enr, j) => (
-                          <span key={j} style={{ background: '#eff6ff', color: '#3b82f6', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-block' }}>{enr.courseTitle}</span>
+                        {enrollments.slice(0, 2).map((enr, j) => (
+                          <span key={j} style={{ background: '#eff6ff', color: '#3b82f6', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, display: 'inline-block' }}>
+                            {enr.courseTitle || enr.Course?.title}
+                          </span>
                         ))}
-                        {student.enrollments.length > 2 && <span style={{ fontSize: '11px', color: '#9ca3af' }}>+{student.enrollments.length - 2} more</span>}
+                        {enrollments.length === 0 && <span style={{ fontSize: '12px', color: '#9ca3af' }}>No enrollments</span>}
+                        {enrollments.length > 2 && <span style={{ fontSize: '11px', color: '#9ca3af' }}>+{enrollments.length - 2} more</span>}
                       </div>
                     </td>
+                    
+                    {activeTab === 'enrolled' && (
+                      <td style={{ padding: '16px 20px' }}>
+                        {overallAvg !== null ? (
+                          <span style={{ fontWeight: 700, color: overallAvg >= 75 ? '#059669' : overallAvg >= 50 ? '#d97706' : '#dc2626', fontSize: '16px' }}>{overallAvg}%</span>
+                        ) : <span style={{ color: '#9ca3af', fontSize: '13px' }}>N/A</span>}
+                      </td>
+                    )}
+                    
+                    {activeTab === 'enrolled' && (
+                      <td style={{ padding: '16px 20px' }}>
+                        {catStyle ? (
+                          <span style={{ ...catStyle, padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{primaryCat}</span>
+                        ) : (
+                          <span style={{ color: '#9ca3af', fontSize: '12px' }}>—</span>
+                        )}
+                      </td>
+                    )}
+
                     <td style={{ padding: '16px 20px' }}>
-                      {overallAvg !== null ? (
-                        <span style={{ fontWeight: 700, color: overallAvg >= 75 ? '#059669' : overallAvg >= 50 ? '#d97706' : '#dc2626', fontSize: '16px' }}>{overallAvg}%</span>
-                      ) : <span style={{ color: '#9ca3af', fontSize: '13px' }}>N/A</span>}
-                    </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      {catStyle ? (
-                        <span style={{ ...catStyle, padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{primaryCat}</span>
+                      {activeTab === 'enrolled' ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => { setMessageModal({ studentId: student.id, name: student.name }); setFeedback(''); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#eff6ff', color: '#3b82f6', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                            <MessageSquare size={13} /> Message
+                          </button>
+                          <button onClick={() => { setCategoryModal({ studentId: student.id, name: student.name, enrollments }); setCatForm({ courseId: enrollments[0]?.courseId || '', category: enrollments[0]?.category || '', courseRole: enrollments[0]?.courseRole || '' }); setFeedback(''); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#f5f3ff', color: '#6366f1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                            <Tag size={13} /> Assign
+                          </button>
+                          <button onClick={() => handleOpenActivities(student.id, student.name)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#ecfdf5', color: '#10b981', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                            <Activity size={13} /> Activity
+                          </button>
+                        </div>
                       ) : (
-                        <span style={{ color: '#9ca3af', fontSize: '12px' }}>—</span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => { setEnrollModal({ studentId: student.id, name: student.name }); setFeedback(''); setSelectedCourseId(''); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                            <Plus size={13} /> Enroll in Course
+                          </button>
+                        </div>
                       )}
-                    </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => { setMessageModal({ studentId: student.id, name: student.name }); setFeedback(''); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#eff6ff', color: '#3b82f6', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                          <MessageSquare size={13} /> Message
-                        </button>
-                        <button onClick={() => { setCategoryModal({ studentId: student.id, name: student.name, enrollments: student.enrollments }); setCatForm({ courseId: student.enrollments[0]?.courseId || '', category: student.enrollments[0]?.category || '', courseRole: student.enrollments[0]?.courseRole || '' }); setFeedback(''); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#f5f3ff', color: '#6366f1', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                          <Tag size={13} /> Assign
-                        </button>
-                        <button onClick={() => handleOpenActivities(student.id, student.name)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 13px', background: '#ecfdf5', color: '#10b981', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                          <Activity size={13} /> Activity
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Enroll Modal */}
+      {enrollModal && (
+        <div style={modalOverlay} onClick={e => { if (e.target === e.currentTarget) setEnrollModal(null); }}>
+          <div style={modalBox}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Enroll {enrollModal.name}</h3>
+              <button onClick={() => setEnrollModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={20} /></button>
+            </div>
+            {feedback && <p style={{ background: feedback.includes('success') ? '#d1fae5' : '#fee2e2', color: feedback.includes('success') ? '#065f46' : '#991b1b', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', marginBottom: '16px' }}>{feedback}</p>}
+            <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Select Course to Enroll *</label>
+                <select value={selectedCourseId} onChange={e => setSelectedCourseId(e.target.value)} required style={{ width: '100%', padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}>
+                  <option value="">Select one of your courses...</option>
+                  {(dashboardData?.courses || []).map(course => <option key={course.id} value={course.id}>{course.title}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button type="button" onClick={() => setEnrollModal(null)} style={{ padding: '10px 20px', background: '#f3f4f6', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Cancel</button>
+                <button type="submit" disabled={actionLoading} style={{ padding: '10px 24px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', opacity: actionLoading ? 0.7 : 1 }}>
+                  {actionLoading ? 'Enrolling...' : 'Confirm Enrollment'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

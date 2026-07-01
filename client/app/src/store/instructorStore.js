@@ -13,8 +13,10 @@ const useInstructorStore = create((set, get) => ({
   // --- State ---
   dashboardData: null,
   students: [],
+  departmentStudents: [],
   isLoading: false,
   studentsLoading: false,
+  deptStudentsLoading: false,
   error: null,
 
   // --- Actions ---
@@ -26,6 +28,25 @@ const useInstructorStore = create((set, get) => ({
       set({ dashboardData: res.data, isLoading: false });
     } catch (err) {
       set({ error: err.response?.data?.message || 'Failed to load dashboard', isLoading: false });
+    }
+  },
+
+  fetchDepartmentStudents: async () => {
+    set({ deptStudentsLoading: true, error: null });
+    try {
+      const res = await axios.get(`${API}/dashboard/instructor/department-students`, getHeaders());
+      set({ departmentStudents: res.data.students, deptStudentsLoading: false });
+    } catch (err) {
+      set({ error: err.response?.data?.message || 'Failed to fetch department students', deptStudentsLoading: false });
+    }
+  },
+
+  enrollStudent: async (studentId, courseId) => {
+    try {
+      const res = await axios.post(`${API}/dashboard/instructor/enroll-student`, { studentId, courseId }, getHeaders());
+      return res.data;
+    } catch (err) {
+      throw err.response?.data?.message || 'Failed to enroll student';
     }
   },
 

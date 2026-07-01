@@ -242,6 +242,58 @@ router.get('/instructor/students', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/dashboard/instructor/department-students
+// @desc    Get all students in the instructor's category
+// @access  Private (Instructor/Admin)
+router.get('/instructor/department-students', auth, async (req, res) => {
+  try {
+    const instructorCategory = req.user.category;
+    if (!instructorCategory) return res.json({ students: [] });
+
+    // Fetch all students in the same category
+    const students = await User.findAll({
+      where: { role: 'Student', category: instructorCategory },
+      attributes: ['id', 'name', 'email', 'avatar', 'category', 'academicYear'],
+      include: [{
+        model: Enrollment,
+        include: [{ model: Course, attributes: ['id', 'title'] }]
+      }]
+    });
+
+    res.json({ students });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   POST /api/dashboard/instructor/enroll-student
+// @desc    Manually enroll a student into an instructor's course
+// @access  Private (Instructor)
+router.post('/instructor/enroll-student', auth, async (req, res) => {
+  try {
+    const { studentId, courseId } = req.body;
+    
+    // Verify course belongs to instructor
+    const course = await Course.findOne({ where: { id: courseId, instructor_id: req.user.id } });
+    if (!course) return res.status(403).json({ message: 'Unauthorized or Course not found' });
+
+    // Check existing enrollment
+    const existing = await Enrollment.findOne({ where: { student_id: studentId, course_id: courseId } });
+    if (existing) return res.status(400).json({ message: 'Student is already enrolled in this course' });
+
+    const enrollment = await Enrollment.create({
+      student_id: studentId,
+      course_id: courseId
+    });
+
+    res.json({ message: 'Student enrolled successfully', enrollment });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // @route   GET /api/dashboard/instructor/students/:studentId/activities
 // @desc    Get recent activities of a specific student
 // @access  Private (Instructor/Admin)
