@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
 import useAdminStore from '../store/adminStore';
 import AdminOverviewTab from '../components/admin/AdminOverviewTab';
@@ -63,90 +64,12 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-      `}</style>
-
-      {/* Sidebar */}
-      <aside style={{ width: '256px', background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)', color: '#94a3b8', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', flexShrink: 0 }}>
-        {/* Logo */}
-        <div style={{ padding: '28px 24px 20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'linear-gradient(135deg, #dc2626, #b91c1c)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Shield size={22} color="#fff" />
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 800, fontSize: '17px', letterSpacing: '-0.3px' }}>EduVerse</div>
-            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Admin Panel</div>
-          </div>
-        </div>
-
-        {/* Admin Profile Card */}
-        <div style={{ margin: '0 16px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-          {user?.avatar ? (
-            <img src={user.avatar} alt={user.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #dc2626' }} />
-          ) : (
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #dc2626, #b91c1c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '16px', flexShrink: 0 }}>
-              {user?.name?.[0]?.toUpperCase() || 'A'}
-            </div>
-          )}
-          <div>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: '14px' }}>{user?.name || 'Admin'}</div>
-            <div style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600 }}>⚡ Super Admin</div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '0 12px', flex: 1 }}>
-          {menuItems.map(item => {
-            const isActive = activeMenu === item.name;
-            return (
-              <div
-                key={item.name}
-                onClick={() => setActiveMenu(item.name)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '11px 14px', borderRadius: '10px', cursor: 'pointer',
-                  background: isActive ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'transparent',
-                  color: isActive ? '#fff' : '#94a3b8',
-                  transition: 'all 0.2s',
-                  fontWeight: isActive ? 600 : 400,
-                }}
-                onMouseOver={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                onMouseOut={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {item.icon}
-                  <span style={{ fontSize: '14px' }}>{item.name}</span>
-                </div>
-                {item.badge != null && item.badge > 0 && (
-                  <span style={{ background: isActive ? 'rgba(255,255,255,0.25)' : '#dc2626', color: '#fff', fontSize: '11px', fontWeight: 700, borderRadius: '12px', padding: '2px 8px' }}>
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Sign Out */}
-        <div
-          onClick={() => { logout(); navigate('/login'); }}
-          style={{ margin: '12px 12px 24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', borderRadius: '10px', cursor: 'pointer', color: '#64748b', transition: 'all 0.2s' }}
-          onMouseOver={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.1)'; e.currentTarget.style.color = '#f87171'; }}
-          onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
-        >
-          <LogOut size={18} />
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>Sign Out</span>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <DashboardLayout
+      menuItems={menuItems}
+      activeMenu={activeMenu}
+      setActiveMenu={setActiveMenu}
+    >
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Top Bar */}
         <header style={{ height: '72px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', flexShrink: 0 }}>
           <div>
@@ -180,8 +103,8 @@ const AdminDashboard = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
