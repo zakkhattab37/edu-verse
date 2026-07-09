@@ -1,13 +1,15 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useAuthStore from '../store/authStore';
 import useDashboardStore from '../store/dashboardStore';
+import useCourseStore from '../store/courseStore';
 import { motion } from 'framer-motion';
 import {
   GraduationCap, BookOpen, BarChart2, Sparkles,
   ArrowRight, Bell, LogOut, LayoutDashboard,
-  Trophy, Clock, TrendingUp, Star, ChevronRight, User
+  Trophy, Clock, TrendingUp, Star, ChevronRight, User, FileText
 } from 'lucide-react';
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 const CATEGORY_ICONS = {
   'Computer Science': '💻', 'Data Science': '📊', 'Mathematics': '📐',
@@ -25,73 +27,59 @@ const YEAR_COLORS = {
 const StudentHome = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { fetchDashboardData, enrollments, assignments, activities, isLoading } = useDashboardStore();
+  const { fetchDashboardData, enrollments, assignments, quizzes, activities, isLoading } = useDashboardStore();
+  const { courses, fetchCourses, enrollInCourse } = useCourseStore();
+  const [enrollingId, setEnrollingId] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+    fetchCourses();
+  }, [fetchDashboardData, fetchCourses]);
 
   const pendingAssignments = assignments.filter(a => a.status === 'submitted' || a.status === 'pending');
   const yearStyle = YEAR_COLORS[user?.academicYear] || { bg: '#f3f4f6', color: '#6b7280' };
   const catIcon = CATEGORY_ICONS[user?.category] || CATEGORY_ICONS.default;
 
+  // Filter courses the student is NOT enrolled in yet
+  const availableCourses = courses.filter(c => !enrollments.some(e => e.course_id === c.id));
+
+  const handleEnroll = async (courseId) => {
+    setEnrollingId(courseId);
+    try {
+      await enrollInCourse(courseId);
+      await fetchDashboardData(); // Refresh dashboard counts
+    } catch (err) {
+      alert('Failed to enroll: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setEnrollingId(null);
+    }
+  };
+  const [activeMenu, setActiveMenu] = useState('Dashboard');
+  const menuItems = [
+    { name: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { name: 'My Courses', icon: <BookOpen size={18} /> },
+    { name: 'Assignments', icon: <FileText size={18} /> },
+    { name: 'Activity', icon: <Clock size={18} /> }
+  ];
+
+  useEffect(() => {
+    if (activeMenu === 'Dashboard') document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' });
+    if (activeMenu === 'My Courses') document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' });
+    if (activeMenu === 'Assignments') document.getElementById('assignments')?.scrollIntoView({ behavior: 'smooth' });
+    if (activeMenu === 'Activity') document.getElementById('activity')?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeMenu]);
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
+    <DashboardLayout
+      menuItems={menuItems}
+      activeMenu={activeMenu}
+      setActiveMenu={setActiveMenu}
+    >
+      <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
         @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 0 12px rgba(99,102,241,0); } }
       `}</style>
-
-      {/* ── Navbar ── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e2e8f0', padding: '0 48px', height: '68px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BookOpen size={20} color="#fff" />
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px' }}>EduVerse</span>
-        </div>
-
-        {/* Nav Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px', fontSize: '14px', fontWeight: 500, color: '#64748b' }}>
-          <a href="#overview" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }}
-            onMouseOver={e => e.target.style.color = '#6366f1'} onMouseOut={e => e.target.style.color = '#64748b'}>Overview</a>
-          <a href="#courses" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }}
-            onMouseOver={e => e.target.style.color = '#6366f1'} onMouseOut={e => e.target.style.color = '#64748b'}>My Courses</a>
-          <a href="#assignments" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }}
-            onMouseOver={e => e.target.style.color = '#6366f1'} onMouseOut={e => e.target.style.color = '#64748b'}>Assignments</a>
-          <a href="#activity" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }}
-            onMouseOver={e => e.target.style.color = '#6366f1'} onMouseOut={e => e.target.style.color = '#64748b'}>Activity</a>
-        </div>
-
-        {/* Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Dashboard button */}
-          <button onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(99,102,241,0.3)', transition: 'all 0.2s' }}
-            onMouseOver={e => e.currentTarget.style.transform = 'scale(1.03)'}
-            onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <LayoutDashboard size={16} /> My Dashboard
-          </button>
-          {/* Avatar & name */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', cursor: 'pointer' }}
-            onClick={() => navigate('/student-profile')}
-          >
-            <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id}`} alt={user?.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</span>
-          </div>
-          {/* Sign out */}
-          <button onClick={() => { logout(); navigate('/login'); }}
-            style={{ padding: '9px', background: '#fef2f2', border: 'none', borderRadius: '9px', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center' }}
-            title="Sign Out"
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
-      </nav>
 
       {/* ── Hero / Welcome Banner ── */}
       <section id="overview" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #312e81 100%)', padding: '64px 48px', position: 'relative', overflow: 'hidden' }}>
@@ -113,8 +101,8 @@ const StudentHome = () => {
               </span>
             </h1>
             <p style={{ color: '#94a3b8', fontSize: '16px', lineHeight: 1.7, margin: '0 0 32px', maxWidth: '440px' }}>
-              {pendingAssignments.length > 0
-                ? `You have ${pendingAssignments.length} assignment${pendingAssignments.length > 1 ? 's' : ''} due soon. Keep the momentum going!`
+              {(pendingAssignments.length > 0 || quizzes.length > 0)
+                ? `You have ${pendingAssignments.length + quizzes.length} tasks due soon. Keep the momentum going!`
                 : `You're all caught up! Continue exploring your ${enrollments.length} enrolled course${enrollments.length !== 1 ? 's' : ''}.`}
             </p>
             <button onClick={() => navigate('/dashboard')}
@@ -172,7 +160,7 @@ const StudentHome = () => {
                   <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Courses</p>
                 </div>
                 <div style={{ flex: 1, textAlign: 'center', padding: '12px', background: 'rgba(245,158,11,0.1)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.2)' }}>
-                  <p style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#fbbf24' }}>{pendingAssignments.length}</p>
+                  <p style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#fbbf24' }}>{pendingAssignments.length + quizzes.length}</p>
                   <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>Due Soon</p>
                 </div>
                 <div style={{ flex: 1, textAlign: 'center', padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '10px', border: '1px solid rgba(16,185,129,0.2)' }}>
@@ -211,7 +199,7 @@ const StudentHome = () => {
               <motion.div key={enr.id}
                 whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
                 style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '24px', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', transition: 'box-shadow 0.2s' }}
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(`/course-workspace/${enr.course_id}`)}
               >
                 <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #eff6ff, #ddd6fe)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '22px' }}>
                   {catIcon}
@@ -236,30 +224,97 @@ const StudentHome = () => {
         )}
       </section>
 
-      {/* ── Assignments Due ── */}
-      {pendingAssignments.length > 0 && (
+      {/* ── Explore Course Catalog ── */}
+      <section id="catalog" style={{ maxWidth: '1200px', margin: '0 auto', padding: '52px 24px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>🌍 Explore Course Catalog</h2>
+            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '14px' }}>Discover and enroll in new courses</p>
+          </div>
+        </div>
+
+        {availableCourses.length === 0 ? (
+          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '40px' }}>No new courses available to enroll in.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            {availableCourses.map((course) => (
+              <motion.div key={`cat-${course.id}`}
+                whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', transition: 'box-shadow 0.2s' }}
+              >
+                <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #fdf4ff, #e879f9)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', fontSize: '22px' }}>
+                  {CATEGORY_ICONS[course.category] || CATEGORY_ICONS.default}
+                </div>
+                <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 700, color: '#111827', lineHeight: 1.4 }}>{course.title}</h3>
+                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', flex: 1 }}>{course.description}</p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                  {course.category && <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600 }}>{course.category}</span>}
+                  
+                  <button 
+                    onClick={() => handleEnroll(course.id)}
+                    disabled={enrollingId === course.id}
+                    style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: enrollingId === course.id ? 'not-allowed' : 'pointer', opacity: enrollingId === course.id ? 0.7 : 1, transition: 'transform 0.2s' }}
+                    onMouseOver={e => !enrollingId && (e.currentTarget.style.transform = 'scale(1.05)')}
+                    onMouseOut={e => !enrollingId && (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    {enrollingId === course.id ? 'Enrolling...' : 'Enroll Now'}
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Assignments & Quizzes Due ── */}
+      {(pendingAssignments.length > 0 || quizzes.length > 0) && (
         <section id="assignments" style={{ maxWidth: '1200px', margin: '0 auto', padding: '52px 24px 0' }}>
-          <h2 style={{ margin: '0 0 20px', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>⏰ Assignments Due Soon</h2>
+          <h2 style={{ margin: '0 0 20px', fontSize: '22px', fontWeight: 700, color: '#0f172a' }}>⏰ Due Soon</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {pendingAssignments.slice(0, 5).map(a => (
-              <div key={a.id} style={{ background: '#fff', borderRadius: '14px', border: '1px solid #fde68a', padding: '18px 24px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 1px 4px rgba(245,158,11,0.08)' }}>
+            
+            {pendingAssignments.slice(0, 3).map(a => (
+              <div key={`ass-${a.id}`} style={{ background: '#fff', borderRadius: '14px', border: '1px solid #fde68a', padding: '18px 24px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 1px 4px rgba(245,158,11,0.08)' }}>
                 <div style={{ width: '40px', height: '40px', background: '#fef3c7', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Clock size={20} color="#d97706" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ margin: 0, fontWeight: 700, color: '#111827', fontSize: '15px' }}>{a.title}</p>
-                  <p style={{ margin: '3px 0 0', color: '#9ca3af', fontSize: '13px' }}>{a.course}</p>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: '13px', color: '#6b7280' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><BookOpen size={13} /> {a.course}</span>
+                    <span>• {a.totalPoints} points</span>
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-                    Due: {a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'TBD'}
-                  </span>
+                  <p style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 600, color: '#d97706' }}>
+                    {a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'No Due Date'}
+                  </p>
+                  <button onClick={() => navigate(`/course-workspace/${a.course_id}`)} style={{ padding: '6px 16px', background: '#fff', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer' }}>View</button>
                 </div>
-                <button onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-                  Open <ArrowRight size={13} />
-                </button>
               </div>
             ))}
+
+            {quizzes.slice(0, 3).map(q => (
+              <div key={`quiz-${q.id}`} style={{ background: '#fff', borderRadius: '14px', border: '1px solid #c7d2fe', padding: '18px 24px', display: 'flex', alignItems: 'center', gap: '16px', boxShadow: '0 1px 4px rgba(99,102,241,0.08)' }}>
+                <div style={{ width: '40px', height: '40px', background: '#e0e7ff', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Clock size={20} color="#4338ca" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 700, color: '#111827', fontSize: '15px' }}>Quiz: {q.title}</p>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: '13px', color: '#6b7280' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><BookOpen size={13} /> {q.Course?.title || 'Course'}</span>
+                    <span>• {q.timeLimitMinutes} mins</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 600, color: '#4338ca' }}>
+                    {q.dueDate ? new Date(q.dueDate).toLocaleDateString() : 'No Due Date'}
+                  </p>
+                  <button onClick={() => navigate(`/quiz/${q.id}`)} style={{ padding: '6px 16px', background: '#4f46e5', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#fff', cursor: 'pointer' }}>Take Quiz</button>
+                </div>
+              </div>
+            ))}
+
           </div>
         </section>
       )}
@@ -286,7 +341,8 @@ const StudentHome = () => {
           </div>
         )}
       </section>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
