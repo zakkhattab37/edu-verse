@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Upload, BookOpen, FileCheck, ArrowRight, Bold, Italic, Underline, Strikethrough, Code, Link as LinkIcon, List, ListOrdered, AlignLeft, Undo, Redo, BrainCircuit, Loader } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import useCourseStore from '../store/courseStore';
 import './CourseCreationWizard.css';
 
@@ -69,9 +70,15 @@ const CourseCreationWizard = () => {
 
         {/* Main Content Area */}
         <div className="wizard-main-card">
-          
+          <AnimatePresence mode="wait">
           {step === 1 && (
-            <>
+            <motion.div 
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
               <h2 className="section-heading">Course Information</h2>
               <p className="section-subheading">Start building your course foundation.</p>
               {error && <div style={{ color: 'var(--danger)', marginBottom: '16px' }}>{error}</div>}
@@ -156,11 +163,18 @@ const CourseCreationWizard = () => {
                 </div>
 
               </div>
-            </>
+            </motion.div>
           )}
 
           {step > 1 && (
-            <div style={{ textAlign: 'center', padding: '64px 0' }}>
+            <motion.div 
+              key={`step${step}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              style={{ textAlign: 'center', padding: '64px 0' }}
+            >
               <h2 className="section-heading">Step {step}: {steps[step-1].label}</h2>
               <p className="section-subheading">Content for this step will go here.</p>
               {step === 5 && (
@@ -169,8 +183,9 @@ const CourseCreationWizard = () => {
                   {error && <p style={{ color: 'var(--danger)', marginTop: '8px' }}>{error}</p>}
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
 
           <div className="wizard-footer">
             <button className="btn-draft" disabled={isLoading}>Save Draft</button>
