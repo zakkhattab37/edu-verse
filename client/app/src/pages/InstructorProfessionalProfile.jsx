@@ -3,14 +3,17 @@ import { Star, Video, Users, CheckCircle, Camera, Loader } from 'lucide-react';
 import useInstructorStore from '../store/instructorStore';
 import useDashboardStore from '../store/dashboardStore';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const InstructorProfessionalProfile = () => {
   const navigate = useNavigate();
   const { dashboardData, isLoading, fetchInstructorDashboard } = useInstructorStore();
-  const { uploadAvatar } = useDashboardStore();
+  const { uploadAvatar, uploadCover } = useDashboardStore();
   
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const fileInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
   useEffect(() => {
     if (!dashboardData) {
@@ -41,6 +44,17 @@ const InstructorProfessionalProfile = () => {
     setUploading(false);
   };
 
+  const handleCoverChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    const url = await uploadCover(file);
+    if (url) {
+       await fetchInstructorDashboard();
+    }
+    setUploadingCover(false);
+  };
+
   const getInitials = (name) => {
     return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'IN';
   };
@@ -49,59 +63,106 @@ const InstructorProfessionalProfile = () => {
   const publishedCourses = courses || [];
 
   return (
-    <div className="container" style={{ padding: '64px 24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container" 
+      style={{ padding: '64px 24px', maxWidth: '1000px', margin: '0 auto' }}
+    >
       <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ marginBottom: '24px', padding: '10px 20px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>&larr; Back to Dashboard</button>
       
-      <div className="glass-panel" style={{ display: 'flex', gap: '40px', padding: '40px', marginBottom: '40px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-         {/* Avatar Section */}
+      <div className="glass-panel" style={{ position: 'relative', marginBottom: '40px', background: '#fff', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+         {/* Interactive Cover */}
          <div 
-           style={{ 
-             width: '160px', height: '160px', borderRadius: '16px', 
-             background: user?.avatar ? `url(${user.avatar}) center/cover` : 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
-             display: 'flex', alignItems: 'center', justifyContent: 'center', 
-             fontSize: '48px', fontWeight: 'bold', color: '#fff',
-             position: 'relative', cursor: 'pointer', overflow: 'hidden'
-           }}
-           onClick={() => fileInputRef.current?.click()}
+            style={{ 
+              height: '200px', 
+              background: user?.cover ? `url(${user.cover}) center/cover` : 'linear-gradient(135deg, #10b981, #059669)', 
+              borderRadius: '16px 16px 0 0',
+              position: 'relative',
+              cursor: 'pointer',
+              overflow: 'hidden'
+            }}
+            onClick={() => coverInputRef.current?.click()}
          >
-           {!user?.avatar && !uploading && getInitials(user?.name)}
-           
-           <div style={{
-             position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
-             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-             opacity: uploading ? 1 : 0, transition: 'opacity 0.2s', gap: '8px'
-           }}
-           onMouseOver={e => { if(!uploading) e.currentTarget.style.opacity = '1'; }}
-           onMouseOut={e => { if(!uploading) e.currentTarget.style.opacity = '0'; }}
-           >
-             {uploading ? (
+            <div style={{
+              position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              opacity: uploadingCover ? 1 : 0, transition: 'opacity 0.2s', gap: '8px', color: '#fff'
+            }}
+            onMouseOver={e => { if(!uploadingCover) e.currentTarget.style.opacity = '1'; }}
+            onMouseOut={e => { if(!uploadingCover) e.currentTarget.style.opacity = '0'; }}
+            >
+              {uploadingCover ? (
                 <Loader size={32} style={{ animation: 'spin 1s linear infinite' }} />
-             ) : (
-               <>
-                 <Camera size={32} />
-                 <span style={{ fontSize: '14px', fontWeight: 600 }}>Change Photo</span>
-               </>
-             )}
-           </div>
-           
-           <input 
-             type="file" 
-             ref={fileInputRef} 
-             style={{ display: 'none' }} 
-             accept="image/*" 
-             onChange={handleAvatarChange} 
-           />
-         </div>
-         
-         {/* Info Section */}
-         <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-               <h1 style={{ fontSize: '36px', margin: 0, fontWeight: 800, color: '#111827' }}>{user?.name}</h1>
-               <CheckCircle color="#10b981" size={24} />
+              ) : (
+                <>
+                  <Camera size={32} />
+                  <span style={{ fontSize: '16px', fontWeight: 600 }}>Update Cover Photo</span>
+                </>
+              )}
             </div>
-            <p style={{ fontSize: '18px', color: '#6b7280', marginBottom: '24px' }}>
-              {user?.category ? `Professor of ${user.category}` : 'Instructor'}
-            </p>
+            <input 
+              type="file" 
+              ref={coverInputRef} 
+              style={{ display: 'none' }} 
+              accept="image/*" 
+              onChange={handleCoverChange} 
+            />
+         </div>
+
+         <div style={{ padding: '0 40px 40px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: '24px', marginTop: '-60px' }}>
+               {/* Avatar Section */}
+               <div 
+                 style={{ 
+                   width: '160px', height: '160px', borderRadius: '16px', 
+                   background: user?.avatar ? `url(${user.avatar}) center/cover` : 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
+                   display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                   fontSize: '48px', fontWeight: 'bold', color: '#fff',
+                   position: 'relative', cursor: 'pointer', overflow: 'hidden', border: '4px solid white'
+                 }}
+                 onClick={() => fileInputRef.current?.click()}
+               >
+                 {!user?.avatar && !uploading && getInitials(user?.name)}
+                 
+                 <div style={{
+                   position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                   opacity: uploading ? 1 : 0, transition: 'opacity 0.2s', gap: '8px'
+                 }}
+                 onMouseOver={e => { if(!uploading) e.currentTarget.style.opacity = '1'; }}
+                 onMouseOut={e => { if(!uploading) e.currentTarget.style.opacity = '0'; }}
+                 >
+                   {uploading ? (
+                      <Loader size={32} style={{ animation: 'spin 1s linear infinite' }} />
+                   ) : (
+                     <>
+                       <Camera size={32} />
+                       <span style={{ fontSize: '14px', fontWeight: 600 }}>Change Photo</span>
+                     </>
+                   )}
+                 </div>
+                 
+                 <input 
+                   type="file" 
+                   ref={fileInputRef} 
+                   style={{ display: 'none' }} 
+                   accept="image/*" 
+                   onChange={handleAvatarChange} 
+                 />
+               </div>
+               
+               <div style={{ marginTop: '70px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                     <h1 style={{ fontSize: '36px', margin: 0, fontWeight: 800, color: '#111827' }}>{user?.name}</h1>
+                     <CheckCircle color="#10b981" size={24} />
+                  </div>
+                  <p style={{ fontSize: '18px', color: '#6b7280', margin: 0 }}>
+                    {user?.category ? `Professor of ${user.category}` : 'Instructor'}
+                  </p>
+               </div>
+            </div>
             
             <div style={{ display: 'flex', gap: '32px', padding: '24px', background: '#f8fafc', borderRadius: '12px' }}>
                <div>
@@ -136,8 +197,16 @@ const InstructorProfessionalProfile = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                {publishedCourses.length === 0 ? (
                  <p style={{ color: '#6b7280', margin: 0 }}>No courses published yet.</p>
-               ) : publishedCourses.map(course => (
-                 <div key={course.id} className="glass-panel" style={{ display: 'flex', gap: '16px', padding: '16px', background: '#fff', borderRadius: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+               ) : publishedCourses.map((course, index) => (
+                 <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                    key={course.id} 
+                    className="glass-panel" 
+                    style={{ display: 'flex', gap: '16px', padding: '16px', background: '#fff', borderRadius: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+                 >
                     <div style={{ width: '160px', height: '100px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                        <Video size={32} color="#94a3b8" />
                     </div>
@@ -151,7 +220,7 @@ const InstructorProfessionalProfile = () => {
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                        <button onClick={() => navigate(`/course-workspace/${course.id}`)} style={{ padding: '8px 20px', background: '#eff6ff', color: '#3b82f6', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>View Course</button>
                     </div>
-                 </div>
+                 </motion.div>
                ))}
             </div>
          </div>
@@ -173,7 +242,7 @@ const InstructorProfessionalProfile = () => {
             </div>
          </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

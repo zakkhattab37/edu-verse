@@ -4,6 +4,7 @@ import useAuthStore from '../store/authStore';
 import useInstructorStore from '../store/instructorStore';
 import InstructorDashboardOverview from '../components/instructor/InstructorDashboardOverview';
 import InstructorCoursesTab from '../components/instructor/InstructorCoursesTab';
+import InstructorCourseManager from '../components/instructor/InstructorCourseManager';
 import InstructorStudentsTab from '../components/instructor/InstructorStudentsTab';
 import InstructorGradingTab from '../components/instructor/InstructorGradingTab';
 import {
@@ -12,9 +13,11 @@ import {
   ChevronDown, Plus, LogOut, AlertCircle, Loader
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 const InstructorDashboard = () => {
   const [activeMenu, setActiveMenu] = useState('Dashboard');
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
@@ -28,15 +31,7 @@ const InstructorDashboard = () => {
     fetchInstructorStudents
   } = useInstructorStore();
 
-  useEffect(() => {
-    fetchInstructorDashboard();
-  }, [fetchInstructorDashboard]);
-
-  useEffect(() => {
-    if (activeMenu === 'Students') {
-      fetchInstructorStudents();
-    }
-  }, [activeMenu, fetchInstructorStudents]);
+  // Data is now fetched globally by App.jsx
 
   const pendingCount = dashboardData?.pendingTasks?.length || 0;
 
@@ -73,7 +68,10 @@ const InstructorDashboard = () => {
       case 'Dashboard':
         return <InstructorDashboardOverview data={dashboardData} onTabChange={setActiveMenu} />;
       case 'My Courses':
-        return <InstructorCoursesTab data={dashboardData} />;
+        if (selectedCourseId) {
+          return <InstructorCourseManager courseId={selectedCourseId} onBack={() => setSelectedCourseId(null)} />;
+        }
+        return <InstructorCoursesTab data={dashboardData} onSelectCourse={setSelectedCourseId} />;
       case 'Students':
         return <InstructorStudentsTab students={students} studentsLoading={studentsLoading} />;
       case 'Grading Queue':
@@ -86,88 +84,12 @@ const InstructorDashboard = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Inter', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-      `}</style>
-
-      {/* Sidebar */}
-      <aside style={{ width: '256px', background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)', color: '#94a3b8', display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', flexShrink: 0 }}>
-        {/* Logo */}
-        <div style={{ padding: '28px 24px 20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <BrainCircuit size={22} color="#fff" />
-          </div>
-          <div>
-            <div style={{ color: '#fff', fontWeight: 800, fontSize: '17px', letterSpacing: '-0.3px' }}>EduVerse</div>
-            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Instructor Portal</div>
-          </div>
-        </div>
-
-        {/* Instructor Profile Card */}
-        <div onClick={() => navigate('/instructor-profile')} style={{ margin: '0 16px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}>
-          <img
-            src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.id}`}
-            alt={user?.name}
-            style={{ width: '42px', height: '42px', borderRadius: '50%', border: '2px solid #6366f1', flexShrink: 0, objectFit: 'cover' }}
-          />
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Instructor'}</div>
-            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Instructor · EduVerse</div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '0 12px', flex: 1, overflowY: 'auto' }}>
-          {menuItems.map(item => {
-            const isActive = activeMenu === item.name;
-            return (
-              <div
-                key={item.name}
-                onClick={() => setActiveMenu(item.name)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '11px 14px', borderRadius: '10px', cursor: 'pointer',
-                  background: isActive ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'transparent',
-                  color: isActive ? '#fff' : '#94a3b8',
-                  transition: 'all 0.2s',
-                  fontWeight: isActive ? 600 : 400,
-                }}
-                onMouseOver={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                onMouseOut={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {item.icon}
-                  <span style={{ fontSize: '14px' }}>{item.name}</span>
-                </div>
-                {item.badge && (
-                  <span style={{ background: '#f59e0b', color: '#fff', fontSize: '11px', fontWeight: 700, borderRadius: '12px', padding: '2px 8px', minWidth: '22px', textAlign: 'center' }}>
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Sign Out */}
-        <div
-          onClick={() => { logout(); navigate('/login'); }}
-          style={{ margin: '12px 12px 24px', display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', borderRadius: '10px', cursor: 'pointer', color: '#64748b', transition: 'all 0.2s' }}
-          onMouseOver={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.1)'; e.currentTarget.style.color = '#f87171'; }}
-          onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
-        >
-          <LogOut size={18} />
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>Sign Out</span>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <DashboardLayout 
+      menuItems={menuItems}
+      activeMenu={activeMenu}
+      setActiveMenu={setActiveMenu}
+    >
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Top Bar */}
         <header style={{ height: '72px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', flexShrink: 0 }}>
           <div>
@@ -204,18 +126,23 @@ const InstructorDashboard = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
 // ─── Inline Settings Tab ───────────────────────────────────────────
 const InstructorSettingsTab = ({ user: profileData }) => {
-  const [form, setForm] = useState({ name: profileData?.name || '', bio: profileData?.bio || '' });
+  const [form, setForm] = useState({ name: profileData?.name || '', bio: profileData?.bio || '', category: profileData?.category || '' });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const { fetchInstructorDashboard } = useInstructorStore();
   const token = localStorage.getItem('token');
+
+  const CATEGORIES = [
+    'Computer Science', 'Data Science', 'Mathematics', 'Design',
+    'Business', 'Languages', 'Engineering', 'Arts'
+  ];
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -224,7 +151,7 @@ const InstructorSettingsTab = ({ user: profileData }) => {
       await fetch('http://localhost:5000/api/dashboard/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: form.name, bio: form.bio })
+        body: JSON.stringify({ name: form.name, bio: form.bio, category: form.category })
       });
       await fetchInstructorDashboard();
       setSaved(true);
@@ -245,6 +172,13 @@ const InstructorSettingsTab = ({ user: profileData }) => {
           <div>
             <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Full Name</label>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Category / Department</label>
+            <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={{ width: '100%', padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}>
+              <option value="">Select your department...</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
           <div>
             <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Bio</label>
